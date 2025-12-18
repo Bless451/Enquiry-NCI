@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Staff Dashboard</title>
+</head>
+<body>
+
+  <h1>Staff Enquiry Dashboard</h1>
+
+  <div id="enquiries"></div>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBNPyd3tlm8g-iH2ahakrHgq66wnSRDGf8",
+      authDomain: "enquiry-for-nci.firebaseapp.com",
+      projectId: "enquiry-for-nci",
+      storageBucket: "enquiry-for-nci.firebasestorage.app",
+      messagingSenderId: "668862333596",
+      appId: "1:668862333596:web:c11c34940e266dce4d2359"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const enquiriesDiv = document.getElementById("enquiries");
+
+    onSnapshot(collection(db, "enquiries"), (snapshot) => {
+      enquiriesDiv.innerHTML = "";
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <p><strong>Name:</strong> ${data.name}</p>
+          <p><strong>Email:</strong> ${data.email}</p>
+          <p><strong>Message:</strong> ${data.message}</p>
+          <p><strong>Status:</strong> ${data.status}</p>
+          <hr>
+        `;
+
+        enquiriesDiv.appendChild(div);
+      });
+    });
+  </script>
+
+</body>
+</html>
