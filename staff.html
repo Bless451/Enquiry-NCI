@@ -6,13 +6,13 @@
 <body>
 
   <h1>Staff Enquiry Dashboard</h1>
+  <p>Staff can update enquiry status in real time.</p>
 
   <div id="enquiries"></div>
 
-  <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBNPyd3tlm8g-iH2ahakrHgq66wnSRDGf8",
@@ -31,21 +31,41 @@
     onSnapshot(collection(db, "enquiries"), (snapshot) => {
       enquiriesDiv.innerHTML = "";
 
-      snapshot.forEach((doc) => {
-        const data = doc.data();
+      snapshot.forEach((d) => {
+        const data = d.data();
 
         const div = document.createElement("div");
+        div.style.border = "1px solid #ccc";
+        div.style.padding = "10px";
+        div.style.marginBottom = "10px";
+
         div.innerHTML = `
           <p><strong>Name:</strong> ${data.name}</p>
           <p><strong>Email:</strong> ${data.email}</p>
           <p><strong>Message:</strong> ${data.message}</p>
           <p><strong>Status:</strong> ${data.status}</p>
-          <hr>
+
+          <button onclick="updateStatus('${d.id}', 'In Progress')">Mark In Progress</button>
+          <button onclick="updateStatus('${d.id}', 'Resolved')">Mark Resolved</button>
+
+          <p id="msg-${d.id}"></p>
         `;
 
         enquiriesDiv.appendChild(div);
       });
     });
+
+    window.updateStatus = async function(id, status){
+      try{
+        await updateDoc(doc(db, "enquiries", id), {
+          status: status,
+          updatedAt: serverTimestamp()
+        });
+        document.getElementById(`msg-${id}`).innerText = "Saved!";
+      }catch(e){
+        console.error(e);
+      }
+    }
   </script>
 
 </body>
