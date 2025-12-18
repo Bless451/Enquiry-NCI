@@ -1,25 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Staff Dashboard</title>
 </head>
+
 <body>
-<div style="border:1px solid #999; padding:10px; background:#f9f9f9;">
-  <strong>Staff Login Details (for marker access)</strong><br>
-  Username: <em>staff@nci.ie</em><br>
-  Password: <em>cloud123</em>
-</div>
-<br>
+  <!-- Marker access details (as requested in brief) -->
+  <div style="border:1px solid #999; padding:12px; background:#f9f9f9; margin-bottom:12px;">
+    <strong>Staff Login Details (for marker access)</strong><br>
+    Username: <em>staff@nci.ie</em><br>
+    Password: <em>cloud123</em><br>
+    <small>(Note: authentication is not implemented; credentials are shown to meet access requirement.)</small>
+  </div>
 
   <h1>Staff Enquiry Dashboard</h1>
-  <p>Staff can update enquiry status in real time.</p>
+  <p>Staff can view and update enquiry status in real time.</p>
 
-  <div id="enquiries"></div>
+  <div id="enquiries">Loading enquiries…</div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import {
+      getFirestore,
+      collection,
+      onSnapshot,
+      doc,
+      updateDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
+    // ✅ Your Firebase config (already correct)
     const firebaseConfig = {
       apiKey: "AIzaSyBNPyd3tlm8g-iH2ahakrHgq66wnSRDGf8",
       authDomain: "enquiry-for-nci.firebaseapp.com",
@@ -34,45 +46,74 @@
 
     const enquiriesDiv = document.getElementById("enquiries");
 
+    function safeText(v) {
+      return (v === undefined || v === null) ? "" : String(v);
+    }
+
+    // Real-time listener
     onSnapshot(collection(db, "enquiries"), (snapshot) => {
+      if (snapshot.empty) {
+        enquiriesDiv.innerHTML = "<p>No enquiries found yet.</p>";
+        return;
+      }
+
       enquiriesDiv.innerHTML = "";
 
       snapshot.forEach((d) => {
         const data = d.data();
 
-        const div = document.createElement("div");
-        div.style.border = "1px solid #ccc";
-        div.style.padding = "10px";
-        div.style.marginBottom = "10px";
+        const card = document.createElement("div");
+        card.style.border = "1px solid #ccc";
+        card.style.padding = "12px";
+        card.style.marginBottom = "12px";
+        card.style.borderRadius = "8px";
+        card.style.background = "#fff";
 
-        div.innerHTML = `
-          <p><strong>Name:</strong> ${data.name}</p>
-          <p><strong>Email:</strong> ${data.email}</p>
-          <p><strong>Message:</strong> ${data.message}</p>
-          <p><strong>Status:</strong> ${data.status}</p>
+        const currentStatus = safeText(data.status) || "New";
 
-          <button onclick="updateStatus('${d.id}', 'In Progress')">Mark In Progress</button>
-          <button onclick="updateStatus('${d.id}', 'Resolved')">Mark Resolved</button>
+        card.innerHTML = `
+          <p><strong>Name:</strong> ${safeText(data.name)}</p>
+          <p><strong>Email:</strong> ${safeText(data.email)}</p>
+          <p><strong>Message:</strong> ${safeText(data.message)}</p>
+          <p><strong>Status:</strong> <span id="status-${d.id}">${currentStatus}</span></p>
 
-          <p id="msg-${d.id}"></p>
+          <button id="progress-${d.id}">Mark In Progress</button>
+          <button id="resolve-${d.id}">Mark Resolved</button>
+
+          <p id="msg-${d.id}" style="margin-top:8px;"></p>
         `;
 
-        enquiriesDiv.appendChild(div);
+        enquiriesDiv.appendChild(card);
+
+        document.getElementById(`progress-${d.id}`).addEventListener("click", () => {
+          updateStatus(d.id, "In Progress");
+        });
+
+        document.getElementById(`resolve-${d.id}`).addEventListener("click", () => {
+          updateStatus(d.id, "Resolved");
+        });
       });
     });
 
-    window.updateStatus = async function(id, status){
-      try{
+    async function updateStatus(id, status) {
+      const msgEl = document.getElementById(`msg-${id}`);
+      msgEl.style.color = "black";
+      msgEl.textContent = "Saving...";
+
+      try {
         await updateDoc(doc(db, "enquiries", id), {
           status: status,
           updatedAt: serverTimestamp()
         });
-        document.getElementById(`msg-${id}`).innerText = "Saved!";
-      }catch(e){
+
+        msgEl.style.color = "green";
+        msgEl.textContent = "Saved!";
+      } catch (e) {
         console.error(e);
+        msgEl.style.color = "red";
+        msgEl.textContent = "Save failed (check console).";
       }
     }
   </script>
-
 </body>
 </html>
