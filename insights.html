@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Insights Dashboard</title>
+</head>
+<body>
+
+  <h1>Enquiry Insights</h1>
+
+  <p><strong>Total enquiries:</strong> <span id="total">0</span></p>
+  <p><strong>New:</strong> <span id="newCount">0</span></p>
+  <p><strong>In Progress:</strong> <span id="progressCount">0</span></p>
+  <p><strong>Resolved:</strong> <span id="resolvedCount">0</span></p>
+
+  <hr>
+
+  <p><strong>Resolution Rate:</strong> <span id="rate">0%</span></p>
+
+  <p>
+    Links:
+    <a href="public.html">Public Form</a> |
+    <a href="staff.html">Staff Dashboard</a>
+  </p>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBNPyd3tlm8g-iH2ahakrHgq66wnSRDGf8",
+      authDomain: "enquiry-for-nci.firebaseapp.com",
+      projectId: "enquiry-for-nci",
+      storageBucket: "enquiry-for-nci.firebasestorage.app",
+      messagingSenderId: "668862333596",
+      appId: "1:668862333596:web:c11c34940e266dce4d2359"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const totalEl = document.getElementById("total");
+    const newEl = document.getElementById("newCount");
+    const progressEl = document.getElementById("progressCount");
+    const resolvedEl = document.getElementById("resolvedCount");
+    const rateEl = document.getElementById("rate");
+
+    onSnapshot(collection(db, "enquiries"), (snapshot) => {
+      let total = 0;
+      let newCount = 0;
+      let progressCount = 0;
+      let resolvedCount = 0;
+
+      snapshot.forEach((doc) => {
+        total++;
+        const data = doc.data();
+
+        if (data.status === "New") newCount++;
+        if (data.status === "In Progress") progressCount++;
+        if (data.status === "Resolved") resolvedCount++;
+      });
+
+      totalEl.innerText = total;
+      newEl.innerText = newCount;
+      progressEl.innerText = progressCount;
+      resolvedEl.innerText = resolvedCount;
+
+      const rate = total > 0 ? Math.round((resolvedCount / total) * 100) : 0;
+      rateEl.innerText = rate + "%";
+    });
+  </script>
+
+</body>
+</html>
